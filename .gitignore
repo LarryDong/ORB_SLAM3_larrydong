@@ -1,14 +1,8 @@
-build/*
-data/*
 
-# Ignore all
-*
+build*
+data*
 
-# Unignore all with extensions
-!*.*
-
-# Unignore all dirs
-!*/
+Examples_old*
 
 CMakeLists.txt.user
 CMakeLists_modified.txt
