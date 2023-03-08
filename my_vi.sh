@@ -4,10 +4,10 @@ datasetPath='/home/larrydong/codeGit/ORB_SLAM3_larrydong/data'
 #------------------------------------
 # Monocular Examples
 echo "Launching my own data."
-./Apps/build/my_own   \
+./Apps/build/my_vi   \
     ./Vocabulary/ORBvoc.txt \
-    ./Apps/config/usb.yaml \
-    $datasetPath/usb01/image \
-    $datasetPath/usb01/ts.csv \
+    ./Apps/config/vi.yaml \
+    $datasetPath/vi01 \
+    $datasetPath/vi01/ts.csv \
     output_folder
 

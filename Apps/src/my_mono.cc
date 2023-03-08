@@ -47,7 +47,7 @@ int main(int argc, char **argv){
     vector<string> image_filenames;             // save all image filename
     vector<double> image_timestamps;            // save all image ts.
 
-    string image_path = string(argv[3]);
+    string image_path = string(argv[3])+"/image";
     cout << "image path: " << image_path << endl;
 
     string ts_path = string(argv[4]);
@@ -80,3 +80,4 @@ int main(int argc, char **argv){
 
     return 0;
 }
+

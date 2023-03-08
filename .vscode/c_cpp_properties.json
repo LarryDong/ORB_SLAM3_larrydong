@@ -6,6 +6,7 @@
                 "limitSymbolsToIncludedHeaders": true
             },
             "includePath": [
+                "/home/larrydong/codeGit/ORB_SLAM3_larrydong/include/**",
                 "/home/larrydong/codeGit/ORB_SLAM3_larrydong/**",
                 "/opt/ros/melodic/include",
                 "/usr/include/**"
