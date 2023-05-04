@@ -177,7 +177,8 @@ void Preintegrated::Reintegrate()
 void Preintegrated::IntegrateNewMeasurement(const Eigen::Vector3f &acceleration, const Eigen::Vector3f &angVel, const float &dt)
 {
     mvMeasurements.push_back(integrable(acceleration,angVel,dt));
-
+using namespace std;
+// cout << endl << "-------------- In IntegrateNewMeasurement" << endl;
     // Position is updated firstly, as it depends on previously computed velocity and rotation.
     // Velocity is updated secondly, as it depends on previously computed rotation.
     // Rotation is the last to be updated.
@@ -191,14 +192,16 @@ void Preintegrated::IntegrateNewMeasurement(const Eigen::Vector3f &acceleration,
     Eigen::Vector3f acc, accW;
     acc << acceleration(0)-b.bax, acceleration(1)-b.bay, acceleration(2)-b.baz;
     accW << angVel(0)-b.bwx, angVel(1)-b.bwy, angVel(2)-b.bwz;
-
+// cout <<"acceleration: " << acceleration.transpose() << endl;
+// cout <<"bias: ba: (" << b.bax <<", "<< b.bay <<", "<< b.baz <<"), bw: ("<< b.bwx <<", "<< b.bwy <<", "<< b.bwz <<")." <<endl;
+// cout <<"acc: " <<acc.transpose() <<", accW: " <<accW.transpose();
     avgA = (dT*avgA + dR*acc*dt)/(dT+dt);
     avgW = (dT*avgW + accW*dt)/(dT+dt);
 
     // Update delta position dP and velocity dV (rely on no-updated delta rotation)
     dP = dP + dV*dt + 0.5f*dR*acc*dt*dt;
     dV = dV + dR*acc*dt;
-
+// cout <<"dP: " <<dP.transpose() <<", dV: " <<dV.transpose();
     // Compute velocity and position parts of matrices A and B (rely on non-updated delta rotation)
     Eigen::Matrix<float,3,3> Wacc = Sophus::SO3f::hat(acc);
 

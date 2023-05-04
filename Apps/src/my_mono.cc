@@ -76,6 +76,12 @@ int main(int argc, char **argv){
             cv::resize(src, src, cv::Size(width, height));
         }
         SLAM.TrackMonocular(src,tframe);                // Main tracking thread.
+        cv::Mat dst;
+        cv::resize(src, dst, cv::Size(src.cols/2, src.rows/2));
+        cv::imshow("mono_src", dst);
+        cv::waitKey(1);
+        std::cout << "ni: " << ni << std::endl;
+        // cv::waitKey(0);
     }
 
     return 0;

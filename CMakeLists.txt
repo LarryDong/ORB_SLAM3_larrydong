@@ -401,10 +401,13 @@ add_executable(my_mono
 )
 target_link_libraries(my_mono ${PROJECT_NAME})
 
-# my own examples
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Apps/build)
+# VI slam
 add_executable(my_vi
     Apps/src/my_vi.cc
 )
 target_link_libraries(my_vi ${PROJECT_NAME})
 
+# euroc demo
+add_executable(mono_inertial_euroc
+   Examples/Monocular-Inertial/mono_inertial_euroc.cc)
+target_link_libraries(mono_inertial_euroc ${PROJECT_NAME})

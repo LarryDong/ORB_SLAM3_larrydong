@@ -6,8 +6,8 @@ datasetPath='/home/larrydong/codeGit/ORB_SLAM3_larrydong/data'
 echo "Launching my own data."
 ./Apps/build/my_mono   \
     ./Vocabulary/ORBvoc.txt \
-    ./Apps/config/mono.yaml \
-    $datasetPath/vi01 \
-    $datasetPath/vi01/ts.csv \
+    ./Apps/config/lyc_mono.yaml \
+    $datasetPath/lyc_seq01 \
+    $datasetPath/lyc_seq01/ts.csv \
     output_folder
 

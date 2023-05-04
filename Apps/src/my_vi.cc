@@ -91,9 +91,10 @@ int main(int argc, char **argv){
     string ts_path = string(argv[4]);
     cout << "image timestamp path: " << ts_path << endl;
 
-    cout << "--> begin to load images & imu..." << endl;
+    cout << "--> begin to load images..." << endl;
     LoadImages(image_path, ts_path, image_filenames, image_timestamps);
-    LoadIMU(imu_filename, imu_timestamps, accs, gyros);        // TODO:
+    cout << "--> begin to load IMU..." << endl;
+    LoadIMU(imu_filename, imu_timestamps, accs, gyros);
     int tot_images = image_filenames.size();
     int tot_imus = imu_timestamps.size();
     cout << "<-- Load done. Images: " << tot_images << ", imu: " << tot_imus << endl;
@@ -107,7 +108,6 @@ int main(int argc, char **argv){
     while(imu_timestamps[first_imu_idx] <= image_timestamps[0])
         first_imu_idx++;
     first_imu_idx--;       // first imu measurement before the 1st image.
-
 
     ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::IMU_MONOCULAR, true);
     float imageScale = SLAM.GetImageScale();
@@ -127,8 +127,9 @@ int main(int argc, char **argv){
         //     int height = src.rows * imageScale;
         //     cv::resize(src, src, cv::Size(width, height));
         // }
-        cv::resize(src, src, cv::Size(640, 480));
+        // cv::resize(src, src, cv::Size(640, 480));
         // extract imu between frames. (from 2nd)
+        imu_measurements.clear();               // clear imu_measurement
         if(ni>0){
             while(imu_timestamps[first_imu_idx] <= tframe){
                 auto acc = accs[first_imu_idx];
@@ -143,8 +144,13 @@ int main(int argc, char **argv){
         //     cout << i.t << ", " << i.a << ", " << i.w << ", " << endl;
         // }
         SLAM.TrackMonocular(src, tframe, imu_measurements); // Main tracking thread.
+        cv::Mat dst;
+        cv::resize(src, dst, cv::Size(src.cols/2, src.rows/2));
+        cv::imshow("vi_src", dst);
+        cv::waitKey(5);
+        // cv::waitKey(0);
         cout << "ni: " << ni << endl;
-        cout << "first_imu_idx: " << first_imu_idx << endl;
+        // cout << "first_imu_idx: " << first_imu_idx << endl;
     }
 
     return 0;

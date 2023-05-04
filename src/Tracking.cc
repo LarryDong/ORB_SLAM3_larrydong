@@ -1649,6 +1649,7 @@ void Tracking::PreintegrateIMU()
             {
                 IMU::Point* m = &mlQueueImuData.front();
                 cout.precision(17);
+// cout << ", IMU::Point, w: " << m->w.transpose() << ", a: " <<m->a.transpose() <<", t: " <<m->t << endl;
                 if(m->t<mCurrentFrame.mpPrevFrame->mTimeStamp-mImuPer)
                 {
                     mlQueueImuData.pop_front();
@@ -1721,9 +1722,16 @@ void Tracking::PreintegrateIMU()
 
         if (!mpImuPreintegratedFromLastKF)
             cout << "mpImuPreintegratedFromLastKF does not exist" << endl;
+        
+// cout <<" in Tracking.cc, line: " <<__LINE__<<endl;
+// cout <<"acc: " << acc.transpose() << ", angVel: " <<angVel.transpose()<<endl;           // TODO: nan here. id31
+// cout <<" mvImuFromLastFrame-i: a: " << mvImuFromLastFrame[i].a.transpose() <<", w: " << mvImuFromLastFrame[i].w.transpose()<<endl;
         mpImuPreintegratedFromLastKF->IntegrateNewMeasurement(acc,angVel,tstep);
         pImuPreintegratedFromLastFrame->IntegrateNewMeasurement(acc,angVel,tstep);
     }
+
+// auto pp = mpImuPreintegratedFromLastKF;
+// cout <<"imu: dR: " << pp->dR.transpose() <<", dV" << pp->dV.transpose() <<", dP: " << pp->dP.transpose()<<endl;     // ~ correct.
 
     mCurrentFrame.mpImuPreintegratedFrame = pImuPreintegratedFromLastFrame;
     mCurrentFrame.mpImuPreintegrated = mpImuPreintegratedFromLastKF;
@@ -1751,9 +1759,9 @@ bool Tracking::PredictStateIMU()
 
         const Eigen::Vector3f Gz(0, 0, -IMU::GRAVITY_VALUE);
         const float t12 = mpImuPreintegratedFromLastKF->dT;
-cout<<__FILE__<<", "<<__LINE__<<endl;
+// cout<<__FILE__<<", "<<__LINE__<<endl;
         Eigen::Matrix3f Rwb2 = IMU::NormalizeRotation(Rwb1 * mpImuPreintegratedFromLastKF->GetDeltaRotation(mpLastKeyFrame->GetImuBias()));
-cout<<__FILE__<<", "<<__LINE__<<endl;
+// cout<<__FILE__<<", "<<__LINE__<<endl;
         Eigen::Vector3f twb2 = twb1 + Vwb1*t12 + 0.5f*t12*t12*Gz+ Rwb1*mpImuPreintegratedFromLastKF->GetDeltaPosition(mpLastKeyFrame->GetImuBias());
         Eigen::Vector3f Vwb2 = Vwb1 + t12*Gz + Rwb1 * mpImuPreintegratedFromLastKF->GetDeltaVelocity(mpLastKeyFrame->GetImuBias());
         mCurrentFrame.SetImuPoseVelocity(Rwb2,twb2,Vwb2);
@@ -1769,9 +1777,9 @@ cout<<__FILE__<<", "<<__LINE__<<endl;
         const Eigen::Vector3f Vwb1 = mLastFrame.GetVelocity();
         const Eigen::Vector3f Gz(0, 0, -IMU::GRAVITY_VALUE);
         const float t12 = mCurrentFrame.mpImuPreintegratedFrame->dT;
-cout<<__FILE__<<", "<<__LINE__<<endl;
+// cout<<__FILE__<<", "<<__LINE__<<endl;
         Eigen::Matrix3f Rwb2 = IMU::NormalizeRotation(Rwb1 * mCurrentFrame.mpImuPreintegratedFrame->GetDeltaRotation(mLastFrame.mImuBias));
-cout<<__FILE__<<", "<<__LINE__<<endl;
+// cout<<__FILE__<<", "<<__LINE__<<endl;
         Eigen::Vector3f twb2 = twb1 + Vwb1*t12 + 0.5f*t12*t12*Gz+ Rwb1 * mCurrentFrame.mpImuPreintegratedFrame->GetDeltaPosition(mLastFrame.mImuBias);
         Eigen::Vector3f Vwb2 = Vwb1 + t12*Gz + Rwb1 * mCurrentFrame.mpImuPreintegratedFrame->GetDeltaVelocity(mLastFrame.mImuBias);
 
@@ -2127,7 +2135,6 @@ void Tracking::Track()
             if(bOK)
             {
                 bOK = TrackLocalMap();
-
             }
             if(!bOK)
                 cout << "Fail to track local map!" << endl;
@@ -2141,8 +2148,10 @@ void Tracking::Track()
                 bOK = TrackLocalMap();
         }
 
-        if(bOK)
+        if(bOK){
             mState = OK;
+// cout << "mState = OK. (line: )" << __LINE__ << "." << endl;
+        }
         else if (mState == OK)
         {
             if (mSensor == System::IMU_MONOCULAR || mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD)
@@ -3025,11 +3034,12 @@ bool Tracking::TrackLocalMap()
                 mCurrentFrame.mvpMapPoints[i] = static_cast<MapPoint*>(NULL);
         }
     }
-
+cout << "in TrackLocalMap(), inliner matches: " << mnMatchesInliers << ", in line: " << __LINE__ << endl;
     // Decide if the tracking was succesful
     // More restrictive if there was a relocalization recently
     mpLocalMapper->mnMatchesInliers=mnMatchesInliers;
-    if(mCurrentFrame.mnId<mnLastRelocFrameId+mMaxFrames && mnMatchesInliers<50)
+    // if(mCurrentFrame.mnId<mnLastRelocFrameId+mMaxFrames && mnMatchesInliers<50)
+    if(mCurrentFrame.mnId<mnLastRelocFrameId+mMaxFrames && mnMatchesInliers<20)     //~ Modified to a smaller value.
         return false;
 
     if((mnMatchesInliers>10)&&(mState==RECENTLY_LOST))
@@ -4029,26 +4039,24 @@ void Tracking::UpdateFrameIMU(const float s, const IMU::Bias &b, KeyFrame* pCurr
         const Eigen::Matrix3f Rwb1 = mLastFrame.mpLastKeyFrame->GetImuRotation();
         const Eigen::Vector3f Vwb1 = mLastFrame.mpLastKeyFrame->GetVelocity();
         float t12 = mLastFrame.mpImuPreintegrated->dT;
-cout<<__FILE__<<", "<<__LINE__<<endl;
+// cout<<__FILE__<<", "<<__LINE__<<endl;
         mLastFrame.SetImuPoseVelocity(IMU::NormalizeRotation(Rwb1*mLastFrame.mpImuPreintegrated->GetUpdatedDeltaRotation()),
                                       twb1 + Vwb1*t12 + 0.5f*t12*t12*Gz+ Rwb1*mLastFrame.mpImuPreintegrated->GetUpdatedDeltaPosition(),
                                       Vwb1 + Gz*t12 + Rwb1*mLastFrame.mpImuPreintegrated->GetUpdatedDeltaVelocity());
-cout<<__FILE__<<", "<<__LINE__<<endl;
+// cout<<__FILE__<<", "<<__LINE__<<endl;
     }
 
-    if (mCurrentFrame.mpImuPreintegrated)
-    {
+    if (mCurrentFrame.mpImuPreintegrated){
         const Eigen::Vector3f Gz(0, 0, -IMU::GRAVITY_VALUE);
-
         const Eigen::Vector3f twb1 = mCurrentFrame.mpLastKeyFrame->GetImuPosition();
         const Eigen::Matrix3f Rwb1 = mCurrentFrame.mpLastKeyFrame->GetImuRotation();
         const Eigen::Vector3f Vwb1 = mCurrentFrame.mpLastKeyFrame->GetVelocity();
         float t12 = mCurrentFrame.mpImuPreintegrated->dT;
-cout<<__FILE__<<", "<<__LINE__<<endl;
+// cout<<__FILE__<<", "<<__LINE__<<endl;
         mCurrentFrame.SetImuPoseVelocity(IMU::NormalizeRotation(Rwb1*mCurrentFrame.mpImuPreintegrated->GetUpdatedDeltaRotation()),
                                       twb1 + Vwb1*t12 + 0.5f*t12*t12*Gz+ Rwb1*mCurrentFrame.mpImuPreintegrated->GetUpdatedDeltaPosition(),
                                       Vwb1 + Gz*t12 + Rwb1*mCurrentFrame.mpImuPreintegrated->GetUpdatedDeltaVelocity());
-cout<<__FILE__<<", "<<__LINE__<<endl;
+// cout<<__FILE__<<", "<<__LINE__<<endl;
     }
 
     mnFirstImuFrameId = mCurrentFrame.mnId;

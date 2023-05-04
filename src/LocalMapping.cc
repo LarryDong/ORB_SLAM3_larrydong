@@ -1210,6 +1210,14 @@ void LocalMapping::InitializeIMU(float priorG, float priorA, bool bFIBA)
     if(mpCurrentKeyFrame->mTimeStamp-mFirstTs<minTime)
         return;
 
+// //~ DEBUG
+// using namespace std;
+// cout <<"Total KFs: " <<vpKF.size()<<endl;
+// cout <<"-- KF's preinte IMU --- " <<endl;
+// for(const KeyFrame& kf:vpKF){
+//     cout << "dR: "<< kf->mpImuPreintegrated->dR.transpose() <<", dP: " << kf->mpImuPreintegrated->dP.transpose() <<", dV: " <<kf->mpImuPreintegrated->dV.transpose() <<endl;
+// }
+
     bInitializing = true;
 
     while(CheckNewKeyFrames())
@@ -1230,35 +1238,34 @@ void LocalMapping::InitializeIMU(float priorG, float priorA, bool bFIBA)
         dirG.setZero();
         for(vector<KeyFrame*>::iterator itKF = vpKF.begin(); itKF!=vpKF.end(); itKF++)
         {
-            if (!(*itKF)->mpImuPreintegrated)
+            if (!(*itKF)->mpImuPreintegrated){
+cout << "keyFrame Imu not preintegrated. in Line: " << __LINE__ << endl;
                 continue;
+            }
             if (!(*itKF)->mPrevKF)
                 continue;
 
             dirG -= (*itKF)->mPrevKF->GetImuRotation() * (*itKF)->mpImuPreintegrated->GetUpdatedDeltaVelocity();
-cout << "GetImuRotation: " << (*itKF)->mPrevKF->GetImuRotation() << endl;
-cout << "getUpdatedDeltaVelocity: " << (*itKF)->mpImuPreintegrated->GetUpdatedDeltaVelocity() <<endl;   // TODO: issue!!!
-cout << "In KF for loop. dirG: " << dirG.transpose() << endl;
+// cout << "GetImuRotation: " << (*itKF)->mPrevKF->GetImuRotation() << endl << endl;
+// cout << "getUpdatedDeltaVelocity: " << (*itKF)->mpImuPreintegrated->GetUpdatedDeltaVelocity() << endl << endl; // TODO: issue!!!
+// cout << "In KF for loop. dirG: " << dirG.transpose() << endl << endl;
             Eigen::Vector3f _vel = ((*itKF)->GetImuPosition() - (*itKF)->mPrevKF->GetImuPosition())/(*itKF)->mpImuPreintegrated->dT;
             (*itKF)->SetVelocity(_vel);
             (*itKF)->mPrevKF->SetVelocity(_vel);
         }
-cout << "dirG-1: " << dirG.transpose() << endl;
         dirG = dirG/dirG.norm();
-cout << "dirG-2: " << dirG.transpose() << endl;
         Eigen::Vector3f gI(0.0f, 0.0f, -1.0f);
         Eigen::Vector3f v = gI.cross(dirG);
-cout << "v: " << v.transpose() << endl;
         const float nv = v.norm();
         const float cosg = gI.dot(dirG);
         const float ang = acos(cosg);
         Eigen::Vector3f vzg = v*ang/nv;
-cout << __FILE__ << ", " << __LINE__ << endl;
-cout << "vzg: " << vzg << endl;
+// cout << __FILE__ << ", " << __LINE__ << endl;
+// cout << "vzg: " << vzg << endl;
         Rwg = Sophus::SO3f::exp(vzg).matrix();
-cout << __FILE__ << ", " << __LINE__ << endl;
         mRwg = Rwg.cast<double>();
         mTinit = mpCurrentKeyFrame->mTimeStamp-mFirstTs;
+cout << "<-- Rwg initialized done, in line: " << __LINE__ << endl;
     }
     else
     {
@@ -1303,7 +1310,8 @@ cout << __FILE__ << ", " << __LINE__ << endl;
     mpTracker->UpdateFrameIMU(1.0,vpKF[0]->GetImuBias(),mpCurrentKeyFrame);
     if (!mpAtlas->isImuInitialized())
     {
-        mpAtlas->SetImuInitialized();
+        mpAtlas->SetImuInitialized();       //~ TODO: imu not initialized.
+cout << "--> SetImuInitializaed(), in Line: " << __LINE__ << endl;
         mpTracker->t0IMU = mpTracker->mCurrentFrame.mTimeStamp;
         mpCurrentKeyFrame->bImu = true;
     }
